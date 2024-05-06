@@ -81,28 +81,49 @@ def update_saved_track_playlist():
         for i in range(amount_of_playlists):
             if (playlists['items'][i]['name'] == 'song history'):
                 playlist_id = playlists['items'][i]['id']
+                more_playlists = False
                 break
+        counter += amount_of_playlists
+        playlists = sp.current_user_playlists(offset=counter)
+        
     no_more_updates = False
-    most_recent_track = sp.playlist_tracks(limit=1, playlist_id=playlist_id, fields=items(track(uri)))['track']
+    most_recent_track = sp.playlist_tracks(limit=1, playlist_id=playlist_id, fields='items(track(uri))')
+    most_recent_track = most_recent_track['items'][0]['track']['uri']
     counter = 0
+    print(f"Target: {most_recent_track}")
     while not no_more_updates:
-        saved_tracks = sp.current_user_saved_tracks(limit=50)
+        saved_tracks = sp.current_user_saved_tracks(limit=50, offset=counter)
         amount_of_tracks = len(saved_tracks['items'])
         tracks = []
         for i in range(amount_of_tracks):
             track_uri = saved_tracks['items'][i]['track']['uri']
+            print(f"current track: {track_uri}")
             if (track_uri == most_recent_track):
+                no_more_updates = True
                 break
             tracks.append(track_uri)
         # put found track uri's into created playlist, with songs currently found at bottom
         sp.playlist_add_items(playlist_id=playlist_id, items=tracks, position=counter)
         counter += amount_of_tracks
-    saved_tracks = sp.current_user_saved_tracks(offset=counter)          
-        
+                
+    print("Updated song history playlist")
 
+def update_most_played_playlist():
+    more_playlists = True
+    counter = 0
+    playlists = sp.current_user_playlists(offset=counter)
+    while more_playlists:
+        more_playlists = playlists['next'] is not None
+        amount_of_playlists = len(playlists['items'])
+        for i in range(amount_of_playlists):
+            if (playlists['items'][i]['name'] == 'recent jams'):
+                playlist_id = playlists['items'][i]['id']
+                more_playlists = False
+                break
+        counter += amount_of_playlists
+        playlists = sp.current_user_playlists(offset=counter)
 
-
-
+#update_saved_track_playlist()
     
     
     
